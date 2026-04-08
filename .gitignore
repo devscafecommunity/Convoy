@@ -39,3 +39,11 @@
 
 # debug information files
 *.dwo
+
+# Worktrees
+.worktrees/
+worktrees/
+build/
+.vs/
+.vscode/
+cmake-build-*/
