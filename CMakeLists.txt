@@ -14,7 +14,15 @@ find_package(OpenGL REQUIRED)
 find_package(GLAD REQUIRED)
 find_package(ImGui REQUIRED)
 
-# Convoy Core Library
+# Google Test
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/v1.13.0.zip
+)
+FetchContent_MakeAvailable(googletest)
+
+# Convoy Core Library (headers only for math, color, types)
 add_library(convoy_core
   src/core/window_manager.cpp
   src/core/workspace_system.cpp
@@ -22,8 +30,6 @@ add_library(convoy_core
   src/core/command_manager.cpp
   src/core/logger.cpp
   src/core/event_bus.cpp
-  src/shared/math.cpp
-  src/shared/types.cpp
 )
 
 target_include_directories(convoy_core PUBLIC
