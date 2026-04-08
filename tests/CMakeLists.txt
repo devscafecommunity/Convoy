@@ -3,6 +3,7 @@ enable_testing()
 set(TEST_SOURCES
   test_math.cpp
   test_canvas.cpp
+  test_cvp_format.cpp
 )
 
 # Only include window_manager test if graphics deps are available

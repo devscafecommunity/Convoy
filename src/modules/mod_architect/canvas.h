@@ -20,6 +20,7 @@ public:
     Layer* get_active_layer();
     const Layer* get_active_layer() const;
 
+    std::vector<Layer>& get_layers() { return layers_; }
     const std::vector<Layer>& get_layers() const { return layers_; }
     uint32_t width() const { return width_; }
     uint32_t height() const { return height_; }

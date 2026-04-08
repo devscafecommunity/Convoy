@@ -47,6 +47,12 @@ else()
   )
 endif()
 
+# CVP format and filesystem I/O
+target_sources(convoy_core PRIVATE
+  src/core/cvp_format.cpp
+  src/core/filesystem.cpp
+)
+
 # Architect Module Library (no graphics deps)
 add_library(mod_architect
   src/modules/mod_architect/canvas.cpp
