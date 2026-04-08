@@ -58,6 +58,8 @@ target_sources(convoy_core PRIVATE
 # Architect Module Library (no graphics deps)
 add_library(mod_architect
   src/modules/mod_architect/canvas.cpp
+  src/modules/mod_architect/viewport.cpp
+  src/modules/mod_architect/architect_ui.cpp
   src/modules/mod_architect/tools/pencil_tool.cpp
   src/modules/mod_architect/tools/eraser_tool.cpp
   src/modules/mod_architect/tools/bucket_tool.cpp
