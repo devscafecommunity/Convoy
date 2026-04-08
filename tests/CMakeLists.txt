@@ -6,6 +6,7 @@ set(TEST_SOURCES
   test_cvp_format.cpp
   test_command_manager.cpp
   test_architect_ui.cpp
+  integration_test.cpp
 )
 
 # Only include window_manager test if graphics deps are available
