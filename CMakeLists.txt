@@ -25,10 +25,6 @@ FetchContent_MakeAvailable(googletest)
 # Convoy Core Library (headers only for math, color, types)
 add_library(convoy_core
   src/core/window_manager.cpp
-  src/core/workspace_system.cpp
-  src/core/filesystem.cpp
-  src/core/command_manager.cpp
-  src/core/logger.cpp
   src/core/event_bus.cpp
 )
 
