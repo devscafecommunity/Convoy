@@ -51,6 +51,8 @@ endif()
 target_sources(convoy_core PRIVATE
   src/core/cvp_format.cpp
   src/core/filesystem.cpp
+  src/core/command_manager.cpp
+  src/core/commands/pixel_command.cpp
 )
 
 # Architect Module Library (no graphics deps)
