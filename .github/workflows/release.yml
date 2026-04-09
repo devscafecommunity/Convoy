@@ -62,7 +62,9 @@ jobs:
       - name: Bootstrap vcpkg (Windows)
         if: runner.os == 'Windows'
         run: |
-          git clone --depth=1 https://github.com/microsoft/vcpkg.git C:/vcpkg
+          if [ ! -d "C:/vcpkg/.git" ]; then
+            git clone --depth=1 https://github.com/microsoft/vcpkg.git C:/vcpkg
+          fi
           C:/vcpkg/bootstrap-vcpkg.bat -disableMetrics
         shell: bash
 
@@ -99,6 +101,7 @@ jobs:
             -DGLFW_BUILD_DOCS=OFF \
             -DGLFW_BUILD_TESTS=OFF \
             -DGLFW_BUILD_EXAMPLES=OFF \
+            -DGLFW_BUILD_WAYLAND=OFF \
             -DCMAKE_BUILD_TYPE=Release
           cmake --build glfw-build
           sudo cmake --install glfw-build
