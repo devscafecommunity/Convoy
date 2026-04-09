@@ -70,6 +70,7 @@ add_library(mod_architect
   src/modules/mod_architect/tools/bucket_tool.cpp
   src/modules/mod_architect/tools/pivot_tool.cpp
   src/modules/mod_architect/tools/hitbox_tool.cpp
+  src/modules/mod_architect/tools/brush_stroke.cpp
 )
 target_include_directories(mod_architect PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(mod_architect PUBLIC convoy_core)
