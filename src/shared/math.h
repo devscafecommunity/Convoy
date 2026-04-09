@@ -36,7 +36,10 @@ struct Rect {
         float y1 = std::max(y, other.y);
         float x2 = std::min(x + w, other.x + other.w);
         float y2 = std::min(y + h, other.y + other.h);
-        return Rect(x1, y1, std::max(0.0f, x2 - x1), std::max(0.0f, y2 - y1));
+        float rw = x2 - x1;
+        float rh = y2 - y1;
+        if (rw <= 0.0f || rh <= 0.0f) return Rect(0.0f, 0.0f, 0.0f, 0.0f);
+        return Rect(x1, y1, rw, rh);
     }
 };
 
