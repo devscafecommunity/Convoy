@@ -35,8 +35,8 @@ if(GLFW3_FOUND AND OpenGL_FOUND AND GLAD_FOUND AND ImGui_FOUND)
     src/core/gfx/render_texture.cpp
   )
   target_link_libraries(convoy_core PUBLIC
-    GLFW::GLFW
-    OpenGL::OpenGL
+    glfw
+    OpenGL::GL
     GLAD::GLAD
     ImGui::ImGui
   )

@@ -21,7 +21,7 @@ if(EXISTS "${IMGUI_DIR}/imgui.h" AND
       "${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp"
       "${IMGUI_DIR}/backends/imgui_impl_glfw.cpp"
     )
-    target_link_libraries(ImGui INTERFACE OpenGL::OpenGL GLFW::GLFW)
+    target_link_libraries(ImGui INTERFACE OpenGL::GL glfw)
     add_library(ImGui::ImGui ALIAS ImGui)
   endif()
   set(ImGui_FOUND TRUE)
