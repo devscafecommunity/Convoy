@@ -3,7 +3,7 @@
 
 #include "core/window_manager.h"
 
-int main(int, char*[])
+int main(int argc, char* argv[])
 {
     try
     {
