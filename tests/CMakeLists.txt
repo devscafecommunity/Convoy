@@ -12,6 +12,7 @@ set(TEST_SOURCES
   test_dod_visualizer.cpp
   integration_test.cpp
   test_caf_exporter.cpp
+  test_brush.cpp
 )
 
 find_package(GLFW3 3.4 QUIET)

@@ -59,6 +59,7 @@ target_sources(convoy_core PRIVATE
   src/core/plugins/plugin_registry.cpp
   src/core/plugins/hook_system.cpp
   src/core/export/caf_exporter.cpp
+  src/shared/brush.cpp
 )
 
 add_library(mod_architect
