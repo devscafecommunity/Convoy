@@ -1,13 +1,5 @@
 #include "window_manager.h"
 
-#include <GLFW/glfw3.h>
-#include <glad/glad.h>
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
-
-#include <stdexcept>
-
 #include "keybind_manager.h"
 #include "logger.h"
 
@@ -83,7 +75,7 @@ void WindowManager::initialize(const std::string& title, int width, int height)
     menubar_.set_callbacks({.on_new_project = [this]() {},
                             .on_open_project = [this]() {},
                             .on_save_project = [this]() {},
-                            .on_export = [this]() {},
+                            .on_export = [this]() { export_wizard_.open(); },
                             .on_undo = [this]() { cmd_mgr_.undo(); },
                             .on_redo = [this]() { cmd_mgr_.redo(); },
                             .on_module_switch = [this](const std::string& m) {},
@@ -123,6 +115,7 @@ void WindowManager::render_frame()
 
     preferences_.render();
     pressure_curve_editor_.render();
+    export_wizard_.render();
 
     ImGui::Render();
 
