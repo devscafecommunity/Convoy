@@ -11,6 +11,7 @@ set(TEST_SOURCES
   test_hook_system.cpp
   test_dod_visualizer.cpp
   integration_test.cpp
+  test_caf_exporter.cpp
 )
 
 find_package(GLFW3 3.4 QUIET)
