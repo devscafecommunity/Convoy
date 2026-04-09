@@ -60,3 +60,26 @@ TEST(CAFExporterTest, RoundtripPixelData)
     EXPECT_EQ(h.height, 64);
     EXPECT_GT(h.data_offset, 0);
 }
+
+TEST(CAFExportIntegrationTest, CanExportFromCanvas)
+{
+    // This test verifies the export pipeline works end-to-end
+    architect::Canvas canvas(32, 32);
+    canvas.set_pixel(5, 5, Color{255, 255, 255, 255});
+
+    // Get composite pixel data
+    std::vector<uint32_t> pixels;
+    canvas.composite_to_texture(pixels);
+
+    // Export should succeed
+    bool result = CAFExporter::export_to_file(
+        "/tmp/canvas_export.caf", reinterpret_cast<const uint8_t*>(pixels.data()), 32, 32, nullptr, 16, 16);
+
+    ASSERT_TRUE(result);
+
+    // Verify file
+    std::ifstream f("/tmp/canvas_export.caf", std::ios::binary | std::ios::ate);
+    ASSERT_TRUE(f.is_open());
+    auto size = f.tellg();
+    EXPECT_GT(size, 32 * 32 * 4);  // Should be larger than raw pixel data
+}
