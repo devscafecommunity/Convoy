@@ -9,11 +9,24 @@ namespace convoy
 
 // CAF Format: Convoy Art File
 // Binary format for pixel art with embedded collision metadata
+enum class CAFType : uint16_t
+{
+    Sprite = 0,
+    Tilemap = 1,
+    Animation = 2,
+    IsometricSprite = 10,
+    IsometricTilemap = 11,
+    TopDownSprite = 20,
+    TopDownTilemap = 21,
+    DrawingSprite = 30
+};
+
 #pragma pack(push, 1)
 struct CAFHeader
 {
     char magic[4];              // "CAF\0"
     uint16_t version;           // Format version (currently 1)
+    uint16_t type;              // CAFType enum
     uint16_t width;             // Image width in pixels
     uint16_t height;            // Image height in pixels
     uint32_t data_offset;       // Offset to pixel data
@@ -21,7 +34,7 @@ struct CAFHeader
     uint32_t collision_offset;  // Offset to collision data (0 if none)
     uint16_t collision_width;   // Collision box width (0 if none)
     uint16_t collision_height;  // Collision box height (0 if none)
-    uint8_t reserved[12];       // Reserved for future use
+    uint8_t reserved[10];       // Reserved for future use
 
     CAFHeader()
     {
@@ -30,6 +43,7 @@ struct CAFHeader
         magic[2] = 'F';
         magic[3] = '\0';
         version = 1;
+        type = 0;
         width = 0;
         height = 0;
         data_offset = 0;
