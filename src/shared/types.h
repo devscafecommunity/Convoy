@@ -34,6 +34,8 @@ enum class ToolType {
     Bucket,
     ColorPicker,
     Move,
+    Pivot,
+    Hitbox,
 };
 
 } // namespace convoy

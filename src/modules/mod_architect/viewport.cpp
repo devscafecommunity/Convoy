@@ -38,6 +38,18 @@ Vec2 Viewport::canvas_to_screen(float canvas_x, float canvas_y) const {
     return Vec2(screen_x, screen_y);
 }
 
+void Viewport::resize(float width, float height) {
+    width_  = width;
+    height_ = height;
+}
+
+void Viewport::zoom_to_point(float screen_x, float screen_y, float factor) {
+    Vec2 pre = screen_to_canvas(screen_x, screen_y);
+    set_zoom(zoom_ * factor);
+    offset_.x = screen_x - pre.x * zoom_;
+    offset_.y = screen_y - pre.y * zoom_;
+}
+
 void Viewport::fit_to_canvas(const Canvas* canvas) {
     if (!canvas) return;
 
