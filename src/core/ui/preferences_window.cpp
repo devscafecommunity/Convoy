@@ -4,6 +4,8 @@
 
 #include <cstring>
 
+#include "../keybind_manager.h"
+#include "../plugins/plugin_registry.h"
 #include "../settings_config.h"
 
 namespace convoy
@@ -265,18 +267,65 @@ void PreferencesWindow::render_plugins_tab()
             }
         }
     }
+
+    ImGui::Separator();
+    ImGui::Text("Installed Plugins");
+    ImGui::Separator();
+
+    static PluginRegistry* registry = nullptr;
+    if (!registry)
+    {
+    }
+
+    ImGui::TextDisabled("(Plugin registry not connected)");
+    ImGui::Separator();
+
+    if (ImGui::Button("Refresh Plugins"))
+    {
+    }
 }
 
 void PreferencesWindow::render_keybinds_tab()
 {
-    ImGui::Text("Keyboard Shortcuts");
+    auto& km = KeybindManager::instance();
+    auto& keybinds = km.get_all_keybinds();
+
+    static int selected_category = 0;
+    const char* categories[] = {"File", "Edit", "View", "Tools", "Modules", "Zoom"};
+
+    ImGui::Combo("Category", &selected_category, categories, 6);
+
     ImGui::Separator();
 
-    ImGui::TextDisabled("Keybind editor coming soon");
-
-    if (ImGui::Button("Reset to Defaults"))
+    if (ImGui::BeginChild("keybinds_list", {0, 0}))
     {
+        for (const auto& kb : keybinds)
+        {
+            if (kb.category != categories[selected_category])
+                continue;
+
+            std::string key_display = kb.current_modifiers + (kb.current_modifiers.empty() ? "" : "+") + kb.current_key;
+            ImGui::Text("%s", kb.display_name.c_str());
+            ImGui::SameLine(150);
+            ImGui::TextDisabled("%s", key_display.c_str());
+            ImGui::SameLine();
+            if (ImGui::Button(("Reset##" + kb.id).c_str()))
+            {
+                km.reset_keybind(kb.id);
+            }
+        }
     }
+    ImGui::EndChild();
+
+    ImGui::Separator();
+
+    if (ImGui::Button("Reset All to Defaults"))
+    {
+        km.reset_all_keybinds();
+    }
+
+    ImGui::SameLine();
+    ImGui::TextDisabled("(Click key then press new key to rebind)");
 }
 
 void PreferencesWindow::register_plugin_section(ISettingsSection* section)
