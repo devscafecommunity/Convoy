@@ -5,6 +5,8 @@
 #include "core/input/input_handler.h"
 #include "core/ui/dockspace_manager.h"
 #include "core/ui/main_menu_bar.h"
+#include "core/ui/preferences_window.h"
+#include "core/ui/pressure_curve_editor.h"
 #include "core/ui/theme_manager.h"
 #include "modules/mod_architect/architect_ui.h"
 #include "modules/mod_architect/canvas.h"
@@ -31,7 +33,6 @@ class WindowManager
 
     void render_frame();
     void setup_input_commands();
-    void export_current_canvas();
 
     GLFWwindow* window_ = nullptr;
     bool initialized_ = false;
@@ -40,6 +41,9 @@ class WindowManager
     MainMenuBar menubar_;
     InputHandler input_;
     CommandManager cmd_mgr_;
+
+    PreferencesWindow preferences_;
+    PressureCurveEditor pressure_curve_editor_;
 
     architect::Canvas canvas_;
     architect::ArchitectUI architect_ui_;

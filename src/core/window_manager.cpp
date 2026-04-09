@@ -8,7 +8,7 @@
 
 #include <stdexcept>
 
-#include "core/export/caf_exporter.h"
+#include "keybind_manager.h"
 #include "logger.h"
 
 namespace convoy
@@ -66,6 +66,8 @@ void WindowManager::initialize(const std::string& title, int width, int height)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
     io.IniFilename = "convoy_layout.ini";
 
     ThemeManager::apply_dark_terminal();
@@ -75,6 +77,19 @@ void WindowManager::initialize(const std::string& title, int width, int height)
 
     input_.setup_defaults();
     setup_input_commands();
+
+    initialize_default_keybinds();
+
+    menubar_.set_callbacks({.on_new_project = [this]() {},
+                            .on_open_project = [this]() {},
+                            .on_save_project = [this]() {},
+                            .on_export = [this]() {},
+                            .on_undo = [this]() { cmd_mgr_.undo(); },
+                            .on_redo = [this]() { cmd_mgr_.redo(); },
+                            .on_module_switch = [this](const std::string& m) {},
+                            .on_preferences = [this]() { preferences_.open(); }});
+
+    pressure_curve_editor_.on_curve_changed = [](const std::vector<SplinePoint>&) {};
 
     architect_ui_.initialize(&canvas_, &cmd_mgr_);
 
@@ -91,7 +106,6 @@ void WindowManager::setup_input_commands()
     input_.register_command("tool.bucket", [this]() { architect_ui_.set_tool(ToolType::Bucket); });
     input_.register_command("tool.pivot", [this]() { architect_ui_.set_tool(ToolType::Pivot); });
     input_.register_command("tool.hitbox", [this]() { architect_ui_.set_tool(ToolType::Hitbox); });
-    input_.register_command("project.export", [this]() { export_current_canvas(); });
 }
 
 void WindowManager::render_frame()
@@ -107,6 +121,9 @@ void WindowManager::render_frame()
 
     architect_ui_.render();
 
+    preferences_.render();
+    pressure_curve_editor_.render();
+
     ImGui::Render();
 
     int fw, fh;
@@ -116,6 +133,14 @@ void WindowManager::render_frame()
     glClear(GL_COLOR_BUFFER_BIT);
 
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        GLFWwindow* backup = glfwGetCurrentContext();
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
+        glfwMakeContextCurrent(backup);
+    }
 }
 
 void WindowManager::run_loop()
@@ -146,25 +171,6 @@ void WindowManager::shutdown()
     glfwTerminate();
     initialized_ = false;
     Logger::info("WindowManager shutdown");
-}
-
-void WindowManager::export_current_canvas()
-{
-    std::vector<uint32_t> pixels;
-    canvas_.composite_to_texture(pixels);
-
-    bool result = CAFExporter::export_to_file("export.caf",
-                                              reinterpret_cast<const uint8_t*>(pixels.data()),
-                                              canvas_.width(),
-                                              canvas_.height(),
-                                              nullptr,
-                                              0,
-                                              0);
-
-    if (result)
-        Logger::info("Exported canvas to export.caf");
-    else
-        Logger::error("Failed to export canvas");
 }
 
 }  // namespace convoy
