@@ -8,7 +8,7 @@ using namespace convoy;
 using namespace convoy::architect;
 
 TEST(CVPFormatTest, SaveAndLoadCanvas) {
-    std::string test_file = std::string(std::filesystem::temp_directory_path()) + "/test_canvas.cvp";
+    std::string test_file = std::filesystem::temp_directory_path().string() + "/test_canvas.cvp";
     
     Canvas original(32, 32);
     Color red(255, 0, 0, 255);
