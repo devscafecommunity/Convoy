@@ -14,15 +14,13 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-add_library(convoy_core)
-target_include_directories(convoy_core PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
-
-find_package(GLFW3 3.4 QUIET)
 find_package(OpenGL QUIET)
+find_package(GLFW3 3.4 QUIET)
 find_package(GLAD QUIET)
 find_package(ImGui QUIET)
+
+add_library(convoy_core)
+target_include_directories(convoy_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 if(GLFW3_FOUND AND OpenGL_FOUND AND GLAD_FOUND AND ImGui_FOUND)
   target_sources(convoy_core PRIVATE
@@ -34,16 +32,23 @@ if(GLFW3_FOUND AND OpenGL_FOUND AND GLAD_FOUND AND ImGui_FOUND)
     src/core/input/input_handler.cpp
     src/core/gfx/render_texture.cpp
   )
+  target_include_directories(convoy_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/backends
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/glad/include
+  )
   target_link_libraries(convoy_core PUBLIC
-    glfw
+    GLFW3::GLFW3
     OpenGL::GL
     GLAD::GLAD
     ImGui::ImGui
   )
-else()
-  target_sources(convoy_core PRIVATE
-    src/core/event_bus.cpp
+  target_compile_definitions(convoy_core PRIVATE
+    GLFW_INCLUDE_NONE
+    IMGUI_IMPL_OPENGL_LOADER_GLAD
   )
+else()
+  target_sources(convoy_core PRIVATE src/core/event_bus.cpp)
 endif()
 
 target_sources(convoy_core PRIVATE
@@ -53,6 +58,8 @@ target_sources(convoy_core PRIVATE
   src/core/commands/pixel_command.cpp
   src/core/plugins/plugin_registry.cpp
   src/core/plugins/hook_system.cpp
+  src/core/export/caf_exporter.cpp
+  src/shared/brush.cpp
 )
 
 add_library(mod_architect
@@ -63,6 +70,7 @@ add_library(mod_architect
   src/modules/mod_architect/tools/bucket_tool.cpp
   src/modules/mod_architect/tools/pivot_tool.cpp
   src/modules/mod_architect/tools/hitbox_tool.cpp
+  src/modules/mod_architect/tools/brush_stroke.cpp
 )
 target_include_directories(mod_architect PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(mod_architect PUBLIC convoy_core)
@@ -94,7 +102,17 @@ if(GLFW3_FOUND AND OpenGL_FOUND AND GLAD_FOUND AND ImGui_FOUND)
   add_executable(convoy
     src/convoy/main.cpp
   )
-  target_link_libraries(convoy PRIVATE convoy_core mod_architect mod_walker mod_forge mod_sequencer)
+  target_link_libraries(convoy PRIVATE 
+    convoy_core 
+    mod_architect 
+    mod_walker 
+    mod_forge 
+    mod_sequencer 
+    GLFW3::GLFW3
+    glfw
+    OpenGL::GL
+    GLAD::GLAD
+  )
 endif()
 
 if(MSVC)

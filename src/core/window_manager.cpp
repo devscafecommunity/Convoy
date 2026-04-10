@@ -1,57 +1,68 @@
 #include "window_manager.h"
-#include "logger.h"
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
-#include <stdexcept>
 
-namespace convoy {
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
+#include <glad/glad.h>
+#include <imgui.h>
+
+#include "../../third_party/imgui/backends/imgui_impl_glfw.h"
+#include "../../third_party/imgui/backends/imgui_impl_opengl3.h"
+#include "keybind_manager.h"
+#include "logger.h"
+
+namespace convoy
+{
 
 WindowManager::WindowManager() : canvas_(64, 64) {}
 
-WindowManager::~WindowManager() {
-    if (initialized_) shutdown();
+WindowManager::~WindowManager()
+{
+    if (initialized_)
+        shutdown();
 }
 
-void WindowManager::glfw_error_callback(int error, const char* description) {
+void WindowManager::glfw_error_callback(int error, const char* description)
+{
     Logger::error("GLFW Error {}: {}", error, description);
 }
 
-void WindowManager::glfw_key_callback(GLFWwindow* window, int key, int /*sc*/,
-                                      int action, int mods) {
+void WindowManager::glfw_key_callback(GLFWwindow* window, int key, int /*sc*/, int action, int mods)
+{
     auto* self = static_cast<WindowManager*>(glfwGetWindowUserPointer(window));
-    if (self) self->input_.process_key(key, action, mods);
+    if (self)
+        self->input_.process_key(key, action, mods);
 }
 
-void WindowManager::initialize(const std::string& title, int width, int height) {
+void WindowManager::initialize(const std::string& title, int width, int height)
+{
     glfwSetErrorCallback(glfw_error_callback);
-    if (!glfwInit()) throw std::runtime_error("Failed to initialize GLFW");
+    if (!glfwInit())
+        throw std::runtime_error("Failed to initialize GLFW");
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     window_ = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
-    if (!window_) { glfwTerminate(); throw std::runtime_error("Failed to create window"); }
+    if (!window_)
+    {
+        glfwTerminate();
+        throw std::runtime_error("Failed to create window");
+    }
 
     glfwSetWindowUserPointer(window_, this);
     glfwSetKeyCallback(window_, glfw_key_callback);
     glfwMakeContextCurrent(window_);
     glfwSwapInterval(1);
 
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        glfwDestroyWindow(window_);
-        glfwTerminate();
-        throw std::runtime_error("Failed to load OpenGL");
+    if (!gladLoadGL())
+    {
+        throw std::runtime_error("Failed to initialize GLAD");
     }
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
     io.IniFilename = "convoy_layout.ini";
 
     ThemeManager::apply_dark_terminal();
@@ -62,34 +73,80 @@ void WindowManager::initialize(const std::string& title, int width, int height) 
     input_.setup_defaults();
     setup_input_commands();
 
+    initialize_default_keybinds();
+
+    MenuBarCallbacks callbacks;
+    callbacks.on_new_project = []() {};
+    callbacks.on_open_project = []() {};
+    callbacks.on_save_project = []() {};
+    callbacks.on_export = [this]() { export_wizard_.open(); };
+    callbacks.on_undo = [this]() { cmd_mgr_.undo(); };
+    callbacks.on_redo = [this]() { cmd_mgr_.redo(); };
+    callbacks.on_module_switch = [](const std::string&) {};
+    callbacks.on_preferences = [this]() { preferences_.open(); };
+    callbacks.on_layout_change = [this](int preset) {
+        if (preset < 0) {
+            dockspace_.reset_to_default();
+        } else if (preset < 3) {
+            dockspace_.switch_preset(static_cast<LayoutPreset>(preset));
+        }
+    };
+    menubar_.set_callbacks(callbacks);
+
+    pressure_curve_editor_.on_curve_changed = [](const std::vector<SplinePoint>&) {};
+
+    setup_color_sync();
+
     architect_ui_.initialize(&canvas_, &cmd_mgr_);
 
     initialized_ = true;
     Logger::info("WindowManager initialized {}x{}", width, height);
 }
 
-void WindowManager::setup_input_commands() {
-    input_.register_command("edit.undo", [this]() { cmd_mgr_.undo(); });
-    input_.register_command("edit.redo", [this]() { cmd_mgr_.redo(); });
-    input_.register_command("tool.pencil",  [this]() { architect_ui_.set_tool(ToolType::Pencil); });
-    input_.register_command("tool.eraser",  [this]() { architect_ui_.set_tool(ToolType::Eraser); });
-    input_.register_command("tool.bucket",  [this]() { architect_ui_.set_tool(ToolType::Bucket); });
-    input_.register_command("tool.pivot",   [this]() { architect_ui_.set_tool(ToolType::Pivot); });
-    input_.register_command("tool.hitbox",  [this]() { architect_ui_.set_tool(ToolType::Hitbox); });
+void WindowManager::setup_color_sync()
+{
+    color_maker_.set_shared_state(&shared_color_state_);
+    color_selector_.set_shared_state(&shared_color_state_);
+
+    color_selector_.on_color_changed = [this](Color c)
+    {
+        shared_color_state_.current = c;
+        shared_color_state_.add_to_history(c);
+    };
+
+    color_maker_.on_color_changed = [this](Color c) { shared_color_state_.current = c; };
 }
 
-void WindowManager::render_frame() {
+void WindowManager::setup_input_commands()
+{
+    input_.register_command("edit.undo", [this]() { cmd_mgr_.undo(); });
+    input_.register_command("edit.redo", [this]() { cmd_mgr_.redo(); });
+    input_.register_command("tool.pencil", [this]() { architect_ui_.set_tool(ToolType::Pencil); });
+    input_.register_command("tool.eraser", [this]() { architect_ui_.set_tool(ToolType::Eraser); });
+    input_.register_command("tool.bucket", [this]() { architect_ui_.set_tool(ToolType::Bucket); });
+    input_.register_command("tool.pivot", [this]() { architect_ui_.set_tool(ToolType::Pivot); });
+    input_.register_command("tool.hitbox", [this]() { architect_ui_.set_tool(ToolType::Hitbox); });
+}
+
+void WindowManager::render_frame()
+{
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    menubar_.render(cmd_mgr_.can_undo(), cmd_mgr_.can_redo(),
-                    project_name_, 16.0f, 128.0f);
+    menubar_.render(cmd_mgr_.can_undo(), cmd_mgr_.can_redo(), project_name_, 16.0f, 128.0f);
 
     dockspace_.begin_frame();
     dockspace_.end_frame();
 
     architect_ui_.render();
+
+    color_selector_.render();
+    color_maker_.render();
+
+    preferences_.render();
+    pressure_curve_editor_.render();
+    export_wizard_.render();
 
     ImGui::Render();
 
@@ -100,35 +157,36 @@ void WindowManager::render_frame() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-        GLFWwindow* backup = glfwGetCurrentContext();
-        ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault();
-        glfwMakeContextCurrent(backup);
-    }
 }
 
-void WindowManager::run_loop() {
-    while (!should_close()) {
+void WindowManager::run_loop()
+{
+    while (!should_close())
+    {
         glfwPollEvents();
         render_frame();
         glfwSwapBuffers(window_);
     }
 }
 
-bool WindowManager::should_close() const {
+bool WindowManager::should_close() const
+{
     return !window_ || glfwWindowShouldClose(window_);
 }
 
-void WindowManager::shutdown() {
+void WindowManager::shutdown()
+{
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
-    if (window_) { glfwDestroyWindow(window_); window_ = nullptr; }
+    if (window_)
+    {
+        glfwDestroyWindow(window_);
+        window_ = nullptr;
+    }
     glfwTerminate();
     initialized_ = false;
     Logger::info("WindowManager shutdown");
 }
 
-}
+}  // namespace convoy

@@ -74,7 +74,7 @@ void ArchitectUI::render() {
 }
 
 void ArchitectUI::render_toolbar() {
-    ImGui::Begin("Tools##Architect");
+    ImGui::Begin("Toolbar");
 
     float col[4] = {
         current_color_.r / 255.0f, current_color_.g / 255.0f,
@@ -113,7 +113,7 @@ void ArchitectUI::render_toolbar() {
 
 void ArchitectUI::render_canvas_viewport() {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-    ImGui::Begin("Canvas##Architect");
+    ImGui::Begin("Architect");
     ImGui::PopStyleVar();
 
     ImVec2 avail = ImGui::GetContentRegionAvail();

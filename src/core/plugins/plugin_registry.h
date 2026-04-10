@@ -1,13 +1,16 @@
 #pragma once
-#include "plugin_interface.h"
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
-namespace convoy {
+#include "plugin_interface.h"
 
-class PluginRegistry {
-public:
+namespace convoy
+{
+
+class PluginRegistry
+{
+   public:
     void register_plugin(std::shared_ptr<IConvoyPlugin> plugin);
     bool unregister_plugin(const std::string& name);
     void render_all();
@@ -15,9 +18,10 @@ public:
 
     IConvoyPlugin* find(const std::string& name) const;
     size_t count() const { return plugins_.size(); }
+    const std::vector<std::shared_ptr<IConvoyPlugin>>& get_all() const { return plugins_; }
 
-private:
+   private:
     std::vector<std::shared_ptr<IConvoyPlugin>> plugins_;
 };
 
-}
+}  // namespace convoy

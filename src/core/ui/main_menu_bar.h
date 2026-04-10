@@ -13,6 +13,7 @@ struct MenuBarCallbacks {
     std::function<void()> on_redo;
     std::function<void(const std::string& module)> on_module_switch;
     std::function<void()> on_preferences;
+    std::function<void(int)> on_layout_change;
 };
 
 class MainMenuBar {

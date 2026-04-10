@@ -6,11 +6,16 @@ if(NOT GLFW3_FOUND OR NOT OpenGL_FOUND OR NOT GLAD_FOUND)
   return()
 endif()
 
-if(EXISTS "${IMGUI_DIR}/imgui.h" AND
-   EXISTS "${IMGUI_DIR}/backends/imgui_impl_opengl3.h" AND
-   EXISTS "${IMGUI_DIR}/backends/imgui_impl_glfw.h")
-  if(NOT TARGET ImGui)
-    add_library(ImGui STATIC
+if(NOT TARGET ImGui)
+  if(EXISTS "${IMGUI_DIR}/imgui.h" AND
+     EXISTS "${IMGUI_DIR}/backends/imgui_impl_opengl3.h" AND
+     EXISTS "${IMGUI_DIR}/backends/imgui_impl_glfw.h")
+    add_library(ImGui INTERFACE)
+    target_include_directories(ImGui INTERFACE 
+      "${IMGUI_DIR}"
+      "${IMGUI_DIR}/backends"
+    )
+    target_sources(ImGui INTERFACE
       "${IMGUI_DIR}/imgui.cpp"
       "${IMGUI_DIR}/imgui_demo.cpp"
       "${IMGUI_DIR}/imgui_draw.cpp"
@@ -19,13 +24,16 @@ if(EXISTS "${IMGUI_DIR}/imgui.h" AND
       "${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp"
       "${IMGUI_DIR}/backends/imgui_impl_glfw.cpp"
     )
-    target_include_directories(ImGui PUBLIC "${IMGUI_DIR}")
-    target_include_directories(ImGui PRIVATE "${IMGUI_DIR}/backends")
-    target_link_libraries(ImGui PUBLIC OpenGL::GL glfw GLAD::GLAD)
-    # Define custom loader so imgl3w is not used
-    target_compile_definitions(ImGui PRIVATE IMGUI_IMPL_OPENGL_LOADER_CUSTOM)
+    target_link_libraries(ImGui INTERFACE OpenGL::GL GLFW3::GLFW3)
+    target_compile_definitions(ImGui INTERFACE 
+      GLFW_INCLUDE_NONE
+      IMGUI_IMPL_OPENGL_LOADER_GLAD
+    )
     add_library(ImGui::ImGui ALIAS ImGui)
   endif()
+endif()
+
+if(TARGET ImGui)
   set(ImGui_FOUND TRUE)
 else()
   set(ImGui_FOUND FALSE)

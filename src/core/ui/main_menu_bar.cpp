@@ -55,6 +55,12 @@ void MainMenuBar::render_view_menu() {
         ImGui::MenuItem("Toggle Grid",       "G");
         ImGui::MenuItem("Collision Overlay", "C");
         ImGui::MenuItem("DOD Visualizer",    nullptr);
+        ImGui::Separator();
+        if (ImGui::MenuItem("Layout: Artisan",      "F5") && cb_.on_layout_change) cb_.on_layout_change(0);
+        if (ImGui::MenuItem("Layout: Level Design","F6") && cb_.on_layout_change) cb_.on_layout_change(1);
+        if (ImGui::MenuItem("Layout: Debugging",   "F7") && cb_.on_layout_change) cb_.on_layout_change(2);
+        ImGui::Separator();
+        if (ImGui::MenuItem("Reset Layout") && cb_.on_layout_change) cb_.on_layout_change(-1);
         ImGui::EndMenu();
     }
 }

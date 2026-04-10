@@ -1,0 +1,34 @@
+find_package(PkgConfig QUIET)
+if(PkgConfig_EXECUTABLE)
+  pkg_check_modules(PC_GLFW3 QUIET glfw3)
+  if(PC_GLFW3_FOUND)
+    set(GLFW3_FOUND TRUE)
+    set(GLFW3_INCLUDE_DIRS ${PC_GLFW3_INCLUDE_DIRS})
+    set(GLFW3_LIBRARIES ${PC_GLFW3_LIBRARIES})
+    
+    if(NOT TARGET GLFW3::GLFW3)
+      add_library(GLFW3::GLFW3 INTERFACE IMPORTED)
+      set_target_properties(GLFW3::GLFW3 PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${PC_GLFW3_INCLUDE_DIRS}"
+        IMPORTED_LOCATION "${PC_GLFW3_LIBRARIES}"
+      )
+    endif()
+    return()
+  endif()
+endif()
+
+find_library(GLFW3_LIBRARY NAMES glfw3 glfw)
+if(GLFW3_LIBRARY)
+  set(GLFW3_FOUND TRUE)
+  get_filename_component(GLFW3_LIBRARY_DIR "${GLFW3_LIBRARY}" DIRECTORY)
+  set(GLFW3_LIBRARIES "${GLFW3_LIBRARY}")
+  set(GLFW3_INCLUDE_DIRS "${GLFW3_LIBRARY_DIR}/include")
+  
+  if(NOT TARGET GLFW3::GLFW3)
+    add_library(GLFW3::GLFW3 INTERFACE IMPORTED)
+    set_target_properties(GLFW3::GLFW3 PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES "${GLFW3_INCLUDE_DIRS}"
+      IMPORTED_LOCATION "${GLFW3_LIBRARY}"
+    )
+  endif()
+endif()
