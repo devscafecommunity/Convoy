@@ -35,7 +35,10 @@ class IBrushPlugin : public IConvoyPlugin
     virtual void on_stroke_update(float x, float y, float pressure) = 0;
     virtual void on_stroke_end() = 0;
 
-    virtual std::vector<uint8_t> generate_mask(int size, float pressure, float angle) const { return {}; }
+    virtual std::vector<uint8_t> generate_mask(int size, float pressure, float angle) const { 
+        (void)size; (void)pressure; (void)angle;
+        return {}; 
+    }
 
     virtual BrushShape get_shape() const { return BrushShape::Custom; }
 

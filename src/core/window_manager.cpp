@@ -1,6 +1,8 @@
 #include "window_manager.h"
 
+#ifndef GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_NONE
+#endif
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
 #include <imgui.h>
@@ -76,13 +78,18 @@ void WindowManager::initialize(const std::string& title, int width, int height)
     initialize_default_keybinds();
 
     MenuBarCallbacks callbacks;
-    callbacks.on_new_project = []() {};
+    callbacks.on_new_project  = [this]() { new_project_dialog_.open(); };
     callbacks.on_open_project = []() {};
     callbacks.on_save_project = []() {};
     callbacks.on_export = [this]() { export_wizard_.open(); };
-    callbacks.on_undo = [this]() { cmd_mgr_.undo(); };
-    callbacks.on_redo = [this]() { cmd_mgr_.redo(); };
-    callbacks.on_module_switch = [](const std::string&) {};
+    callbacks.on_undo   = [this]() { cmd_mgr_.undo(); };
+    callbacks.on_redo   = [this]() { cmd_mgr_.redo(); };
+    callbacks.on_module_switch = [this](const std::string& module) {
+        if      (module == "architect") current_module_ = ActiveModule::Architect;
+        else if (module == "forge")     current_module_ = ActiveModule::Forge;
+        else if (module == "sequencer") current_module_ = ActiveModule::Sequencer;
+        else if (module == "walker")    current_module_ = ActiveModule::Walker;
+    };
     callbacks.on_preferences = [this]() { preferences_.open(); };
     callbacks.on_layout_change = [this](int preset) {
         if (preset < 0) {
@@ -91,30 +98,18 @@ void WindowManager::initialize(const std::string& title, int width, int height)
             dockspace_.switch_preset(static_cast<LayoutPreset>(preset));
         }
     };
+    callbacks.on_toggle_snap_zones = [this]() { dockspace_.toggle_snap_zones(); };
+    callbacks.on_toggle_grid       = [this]() { architect_ui_.toggle_grid(); };
+    callbacks.on_toggle_collision  = [this]() { architect_ui_.toggle_collision_overlay(); };
+    callbacks.on_toggle_dod        = [this]() { architect_ui_.toggle_dod_visualizer(); };
     menubar_.set_callbacks(callbacks);
 
     pressure_curve_editor_.on_curve_changed = [](const std::vector<SplinePoint>&) {};
-
-    setup_color_sync();
 
     architect_ui_.initialize(&canvas_, &cmd_mgr_);
 
     initialized_ = true;
     Logger::info("WindowManager initialized {}x{}", width, height);
-}
-
-void WindowManager::setup_color_sync()
-{
-    color_maker_.set_shared_state(&shared_color_state_);
-    color_selector_.set_shared_state(&shared_color_state_);
-
-    color_selector_.on_color_changed = [this](Color c)
-    {
-        shared_color_state_.current = c;
-        shared_color_state_.add_to_history(c);
-    };
-
-    color_maker_.on_color_changed = [this](Color c) { shared_color_state_.current = c; };
 }
 
 void WindowManager::setup_input_commands()
@@ -139,11 +134,14 @@ void WindowManager::render_frame()
     dockspace_.begin_frame();
     dockspace_.end_frame();
 
-    architect_ui_.render();
+    switch (current_module_) {
+        case ActiveModule::Architect: architect_ui_.render(); break;
+        case ActiveModule::Forge:     forge_ui_.render();     break;
+        case ActiveModule::Sequencer: sequencer_ui_.render(); break;
+        case ActiveModule::Walker:    walker_ui_.render();    break;
+    }
 
-    color_selector_.render();
-    color_maker_.render();
-
+    new_project_dialog_.render();
     preferences_.render();
     pressure_curve_editor_.render();
     export_wizard_.render();

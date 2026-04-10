@@ -23,7 +23,7 @@ endif()
 
 add_executable(convoy_tests ${TEST_SOURCES})
 
-target_link_libraries(convoy_tests PRIVATE convoy_core mod_architect gtest gtest_main)
+target_link_libraries(convoy_tests PRIVATE convoy_core mod_architect mod_forge mod_sequencer mod_walker gtest gtest_main)
 
 target_include_directories(convoy_tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../src

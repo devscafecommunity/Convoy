@@ -15,12 +15,26 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest)
 
 find_package(OpenGL QUIET)
-find_package(GLFW3 3.4 QUIET)
+
+# Try vcpkg config-mode first (when toolchain is active), then fall back to custom finders
+find_package(glfw3 CONFIG QUIET)
+if(glfw3_FOUND AND NOT TARGET GLFW3::GLFW3)
+  add_library(GLFW3::GLFW3 ALIAS glfw)
+  set(GLFW3_FOUND TRUE)
+else()
+  find_package(GLFW3 3.4 QUIET)
+endif()
+
 find_package(GLAD QUIET)
 find_package(ImGui QUIET)
 
 add_library(convoy_core)
-target_include_directories(convoy_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(convoy_core PUBLIC 
+  ${CMAKE_CURRENT_SOURCE_DIR}/src
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/backends
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/glad/include
+)
 
 if(GLFW3_FOUND AND OpenGL_FOUND AND GLAD_FOUND AND ImGui_FOUND)
   target_sources(convoy_core PRIVATE
@@ -29,13 +43,13 @@ if(GLFW3_FOUND AND OpenGL_FOUND AND GLAD_FOUND AND ImGui_FOUND)
     src/core/ui/theme_manager.cpp
     src/core/ui/dockspace_manager.cpp
     src/core/ui/main_menu_bar.cpp
+    src/core/ui/export_wizard.cpp
+    src/core/ui/preferences_window.cpp
+    src/core/ui/pressure_curve_editor.cpp
+    src/core/ui/new_project_dialog.cpp
     src/core/input/input_handler.cpp
     src/core/gfx/render_texture.cpp
-  )
-  target_include_directories(convoy_core PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/backends
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/glad/include
+    src/core/keybind_manager.cpp
   )
   target_link_libraries(convoy_core PUBLIC
     GLFW3::GLFW3
@@ -46,6 +60,7 @@ if(GLFW3_FOUND AND OpenGL_FOUND AND GLAD_FOUND AND ImGui_FOUND)
   target_compile_definitions(convoy_core PRIVATE
     GLFW_INCLUDE_NONE
     IMGUI_IMPL_OPENGL_LOADER_GLAD
+    _CRT_SECURE_NO_WARNINGS
   )
 else()
   target_sources(convoy_core PRIVATE src/core/event_bus.cpp)
@@ -59,6 +74,8 @@ target_sources(convoy_core PRIVATE
   src/core/plugins/plugin_registry.cpp
   src/core/plugins/hook_system.cpp
   src/core/export/caf_exporter.cpp
+  src/core/settings_config.cpp
+  src/core/project_template.cpp
   src/shared/brush.cpp
 )
 

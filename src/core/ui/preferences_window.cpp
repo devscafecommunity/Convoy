@@ -16,7 +16,11 @@ void PreferencesWindow::render()
     if (!is_open_)
         return;
 
-    ImGui::SetNextWindowSize({700, 500});
+    ImGuiIO& io = ImGui::GetIO();
+    ImGui::SetNextWindowPos(
+        {io.DisplaySize.x * 0.5f - 350.0f, io.DisplaySize.y * 0.5f - 250.0f},
+        ImGuiCond_Once);
+    ImGui::SetNextWindowSize({700.0f, 500.0f}, ImGuiCond_Once);
     if (!ImGui::Begin("Preferences", &is_open_))
     {
         ImGui::End();

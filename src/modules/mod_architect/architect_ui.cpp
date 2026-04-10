@@ -71,9 +71,14 @@ void ArchitectUI::render() {
     render_canvas_viewport();
     render_layers_panel();
     render_properties_panel();
+
+    if (show_dod_)
+        dod_visualizer_.render(&show_dod_, canvas_);
 }
 
 void ArchitectUI::render_toolbar() {
+    ImGui::SetNextWindowPos({8.0f, 30.0f}, ImGuiCond_Once);
+    ImGui::SetNextWindowSize({72.0f, 280.0f}, ImGuiCond_Once);
     ImGui::Begin("Toolbar");
 
     float col[4] = {
@@ -175,6 +180,16 @@ void ArchitectUI::render_canvas_viewport() {
             dl->AddRect({origin.x + htl.x, origin.y + htl.y},
                         {origin.x + hbr.x, origin.y + hbr.y},
                         IM_COL32(255, 144, 0, 200), 0.0f, 0, 1.5f);
+        }
+
+        if (show_collision_ && hitbox_defined_) {
+            Vec2 htl = viewport_.canvas_to_screen(hitbox_.x, hitbox_.y);
+            Vec2 hbr = viewport_.canvas_to_screen(hitbox_.x + hitbox_.w,
+                                                   hitbox_.y + hitbox_.h);
+            ImDrawList* dl = ImGui::GetWindowDrawList();
+            dl->AddRectFilled({origin.x + htl.x, origin.y + htl.y},
+                              {origin.x + hbr.x, origin.y + hbr.y},
+                              IM_COL32(255, 0, 0, 60));
         }
     }
 

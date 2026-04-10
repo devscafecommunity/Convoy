@@ -6,16 +6,22 @@
 #include "core/ui/dockspace_manager.h"
 #include "core/ui/export_wizard.h"
 #include "core/ui/main_menu_bar.h"
+#include "core/ui/new_project_dialog.h"
 #include "core/ui/preferences_window.h"
 #include "core/ui/pressure_curve_editor.h"
 #include "core/ui/theme_manager.h"
 #include "modules/mod_architect/architect_ui.h"
 #include "modules/mod_architect/canvas.h"
+#include "modules/mod_forge/forge_ui.h"
+#include "modules/mod_sequencer/sequencer_ui.h"
+#include "modules/mod_walker/walker_ui.h"
 
 struct GLFWwindow;
 
 namespace convoy
 {
+
+enum class ActiveModule { Architect, Forge, Sequencer, Walker };
 
 class WindowManager
 {
@@ -46,10 +52,15 @@ class WindowManager
     PreferencesWindow preferences_;
     PressureCurveEditor pressure_curve_editor_;
     ExportWizard export_wizard_;
+    NewProjectDialog new_project_dialog_;
 
     architect::Canvas canvas_;
     architect::ArchitectUI architect_ui_;
+    forge::ForgeUI forge_ui_;
+    sequencer::SequencerUI sequencer_ui_;
+    walker::WalkerUI walker_ui_;
 
+    ActiveModule current_module_ = ActiveModule::Architect;
     std::string project_name_ = "Untitled";
 };
 

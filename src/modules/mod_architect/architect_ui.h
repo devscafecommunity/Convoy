@@ -5,6 +5,7 @@
 #include "core/command_manager.h"
 #include "core/gfx/render_texture.h"
 #include "shared/types.h"
+#include "ui/dod_visualizer.h"
 #include <imgui.h>
 #include <memory>
 #include <cstdint>
@@ -23,6 +24,10 @@ public:
     void render();
     void set_tool(ToolType type);
     Tool* get_current_tool() const { return current_tool_.get(); }
+
+    void toggle_grid()              { show_grid_      = !show_grid_; }
+    void toggle_collision_overlay() { show_collision_ = !show_collision_; }
+    void toggle_dod_visualizer()    { show_dod_       = !show_dod_; }
 
 private:
     void render_toolbar();
@@ -53,6 +58,9 @@ private:
     float pan_start_y_   = 0.0f;
 
     bool show_grid_ = true;
+    bool show_collision_ = false;
+    bool show_dod_       = false;
+    DODVisualizer dod_visualizer_;
 
     Vec2 pivot_point_{0.0f, 0.0f};
     Rect hitbox_{0.0f, 0.0f, 0.0f, 0.0f};

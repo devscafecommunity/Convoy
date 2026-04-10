@@ -52,9 +52,10 @@ void MainMenuBar::render_modules_menu() {
 
 void MainMenuBar::render_view_menu() {
     if (ImGui::BeginMenu("View")) {
-        ImGui::MenuItem("Toggle Grid",       "G");
-        ImGui::MenuItem("Collision Overlay", "C");
-        ImGui::MenuItem("DOD Visualizer",    nullptr);
+        if (ImGui::MenuItem("Toggle Grid",       "G")    && cb_.on_toggle_grid)      cb_.on_toggle_grid();
+        if (ImGui::MenuItem("Collision Overlay", "C")    && cb_.on_toggle_collision) cb_.on_toggle_collision();
+        if (ImGui::MenuItem("DOD Visualizer")            && cb_.on_toggle_dod)       cb_.on_toggle_dod();
+        if (ImGui::MenuItem("Snap Zones",    "Tab") && cb_.on_toggle_snap_zones) cb_.on_toggle_snap_zones();
         ImGui::Separator();
         if (ImGui::MenuItem("Layout: Artisan",      "F5") && cb_.on_layout_change) cb_.on_layout_change(0);
         if (ImGui::MenuItem("Layout: Level Design","F6") && cb_.on_layout_change) cb_.on_layout_change(1);

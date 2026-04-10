@@ -14,6 +14,10 @@ struct MenuBarCallbacks {
     std::function<void(const std::string& module)> on_module_switch;
     std::function<void()> on_preferences;
     std::function<void(int)> on_layout_change;
+    std::function<void()> on_toggle_snap_zones;
+    std::function<void()> on_toggle_grid;
+    std::function<void()> on_toggle_collision;
+    std::function<void()> on_toggle_dod;
 };
 
 class MainMenuBar {

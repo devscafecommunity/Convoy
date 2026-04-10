@@ -19,7 +19,7 @@ void DockSpaceManager::begin_frame() {
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
         ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
         ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus |
-        ImGuiWindowFlags_NoBackground;
+        ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoInputs;
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
@@ -27,9 +27,7 @@ void DockSpaceManager::begin_frame() {
     ImGui::Begin("##ConvoyShell", nullptr, flags);
     ImGui::PopStyleVar(3);
 
-    if (!initialized_) {
-        build_initial_layout();
-    }
+    render_snap_zone_overlays();
 }
 
 void DockSpaceManager::end_frame() {
@@ -38,92 +36,33 @@ void DockSpaceManager::end_frame() {
 
 ImGuiID DockSpaceManager::get_zone_id(DockZone zone) const {
     switch (zone) {
-        case DockZone::Toolbar:  return zone_toolbar_;
-        case DockZone::Canvas:   return zone_canvas_;
+        case DockZone::Toolbar:   return zone_toolbar_;
+        case DockZone::Canvas:    return zone_canvas_;
         case DockZone::Inspector: return zone_inspect_;
-        case DockZone::Bottom:  return zone_bottom_;
+        case DockZone::Bottom:    return zone_bottom_;
     }
     return 0;
 }
 
 void DockSpaceManager::build_initial_layout() {
-    ImGuiID main_id = ImGui::GetMainViewport()->ID;
-    ImGui::DockBuilderRemoveNode(main_id);
-    ImGui::DockBuilderAddNode(main_id, ImGuiDockNodeFlags_DockSpace);
-    root_id_ = main_id;
-
-    build_artisan_layout();
+    current_preset_ = LayoutPreset::Artisan;
     initialized_ = true;
 }
 
 void DockSpaceManager::build_artisan_layout() {
-    ImGuiID remaining = root_id_;
-
-    ImGuiID id_right = ImGui::DockBuilderSplitNode(remaining, ImGuiDir_Right, 0.20f, nullptr, &remaining);
-    ImGuiID id_left = ImGui::DockBuilderSplitNode(remaining, ImGuiDir_Left, 0.10f, nullptr, &remaining);
-    ImGuiID id_bottom = ImGui::DockBuilderSplitNode(remaining, ImGuiDir_Down, 0.15f, nullptr, &remaining);
-
-    ImGui::DockBuilderDockWindow("Architect", remaining);
-    ImGui::DockBuilderDockWindow("Inspector", id_right);
-    ImGui::DockBuilderDockWindow("Toolbar", id_left);
-    ImGui::DockBuilderDockWindow("Console", id_bottom);
-
-    ImGui::DockBuilderFinish(root_id_);
-
-    zone_toolbar_ = id_left;
-    zone_canvas_ = remaining;
-    zone_inspect_ = id_right;
-    zone_bottom_ = id_bottom;
     current_preset_ = LayoutPreset::Artisan;
 }
 
 void DockSpaceManager::build_level_design_layout() {
-    ImGui::DockBuilderRemoveNode(root_id_);
-    ImGui::DockBuilderAddNode(root_id_, ImGuiDockNodeFlags_DockSpace);
-
-    ImGuiID remaining = root_id_;
-
-    ImGuiID id_left = ImGui::DockBuilderSplitNode(remaining, ImGuiDir_Left, 0.20f, nullptr, &remaining);
-    ImGuiID id_right = ImGui::DockBuilderSplitNode(remaining, ImGuiDir_Right, 0.20f, nullptr, &remaining);
-
-    ImGui::DockBuilderDockWindow("Layers", id_left);
-    ImGui::DockBuilderDockWindow("Canvas", remaining);
-    ImGui::DockBuilderDockWindow("Tiles", id_right);
-
-    ImGui::DockBuilderFinish(root_id_);
-
-    zone_toolbar_ = id_left;
-    zone_canvas_ = remaining;
-    zone_inspect_ = id_right;
-    zone_bottom_ = 0;
     current_preset_ = LayoutPreset::LevelDesign;
 }
 
 void DockSpaceManager::build_debugging_layout() {
-    ImGui::DockBuilderRemoveNode(root_id_);
-    ImGui::DockBuilderAddNode(root_id_, ImGuiDockNodeFlags_DockSpace);
-
-    ImGuiID remaining = root_id_;
-
-    ImGuiID id_bottom = ImGui::DockBuilderSplitNode(remaining, ImGuiDir_Down, 0.30f, nullptr, &remaining);
-    ImGuiID id_right = ImGui::DockBuilderSplitNode(remaining, ImGuiDir_Right, 0.25f, nullptr, &remaining);
-
-    ImGui::DockBuilderDockWindow("Canvas", remaining);
-    ImGui::DockBuilderDockWindow("Properties", id_right);
-    ImGui::DockBuilderDockWindow("Console", id_bottom);
-
-    ImGui::DockBuilderFinish(root_id_);
-
-    zone_toolbar_ = 0;
-    zone_canvas_ = remaining;
-    zone_inspect_ = id_right;
-    zone_bottom_ = id_bottom;
     current_preset_ = LayoutPreset::Debugging;
 }
 
 void DockSpaceManager::switch_preset(LayoutPreset preset) {
     if (current_preset_ == preset) return;
-
     switch (preset) {
         case LayoutPreset::Artisan:     build_artisan_layout(); break;
         case LayoutPreset::LevelDesign: build_level_design_layout(); break;
@@ -142,4 +81,35 @@ void DockSpaceManager::load_layout() {
     initialized_ = false;
 }
 
-}  // namespace
+void DockSpaceManager::render_snap_zone_overlays() {
+    if (!show_snap_zones_) return;
+
+    ImGuiViewport* vp = ImGui::GetMainViewport();
+    float menu_h = ImGui::GetFrameHeight();
+    float x0 = vp->WorkPos.x;
+    float y0 = vp->WorkPos.y + menu_h;
+    float w  = vp->WorkSize.x;
+    float h  = vp->WorkSize.y - menu_h;
+
+    float toolbar_w   = w * 0.10f;
+    float inspector_w = w * 0.20f;
+    float bottom_h    = h * 0.15f;
+
+    ImU32 zone_col  = IM_COL32(64, 160, 255, 140);
+    ImU32 label_col = IM_COL32(64, 160, 255, 210);
+
+    ImDrawList* dl = ImGui::GetForegroundDrawList();
+    float t = 2.0f;
+
+    dl->AddRect({x0,                    y0},          {x0 + toolbar_w,             y0 + h - bottom_h}, zone_col, 0.0f, 0, t);
+    dl->AddRect({x0 + toolbar_w,        y0},          {x0 + w - inspector_w,       y0 + h - bottom_h}, zone_col, 0.0f, 0, t);
+    dl->AddRect({x0 + w - inspector_w,  y0},          {x0 + w,                     y0 + h - bottom_h}, zone_col, 0.0f, 0, t);
+    dl->AddRect({x0,                    y0 + h - bottom_h}, {x0 + w,               y0 + h},            zone_col, 0.0f, 0, t);
+
+    dl->AddText({x0 + 4,                    y0 + 4},              label_col, "Toolbar");
+    dl->AddText({x0 + toolbar_w + 4,        y0 + 4},              label_col, "Canvas");
+    dl->AddText({x0 + w - inspector_w + 4,  y0 + 4},              label_col, "Inspector");
+    dl->AddText({x0 + 4,                    y0 + h - bottom_h + 4}, label_col, "Console");
+}
+
+} // namespace convoy
